@@ -298,31 +298,31 @@ perfumes = [
     {
         "id": 1,
         "name": "Endless Mountains & Rivers",
-        "img": "assets/1.Endless_rivers.jpg",
+        "img": "assets/1.Endless_rivers.PNG",
         "line": "The Perfume Name is: Endless Mountains & Rivers",
     },
     {
         "id": 2,
         "name": "Flowing Gently into Calm",
-        "img": "assets/2.Flowing_Calm.jpg",
+        "img": "assets/2.Flowing_Calm.PNG",
         "line": "The Perfume Name is: Flowing Gently into Calm",
     },
     {
         "id": 3,
         "name": "Stillness in the Mountains",
-        "img": "assets/3.Still_Mountain.jpg",
+        "img": "assets/3.Still_Mountain.PNG",
         "line": "The Perfume Name is Stillness in the Mountains",
     },
     {
         "id": 4,
         "name": "Wind Through Wooden Frames",
-        "img": "assets/4.Wind_Frames.jpg",
+        "img": "assets/4.Wind_Frames.PNG",
         "line": "The Perfume Name is: Wind Through Wooden Frames",
     },
     {
         "id": 5,
         "name": "Rain In The Hills",
-        "img": "assets/5.Rain_Hills.jpg",
+        "img": "assets/5.Rain_Hills.PNG",
         "line": "The Perfume Name is: Rain In The Hills",
     },
 ]
