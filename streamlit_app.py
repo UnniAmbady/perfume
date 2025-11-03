@@ -1,5 +1,4 @@
-
-# Ver 0.5
+# Ver 0.6
 
 # Perfume Project — Main Page UI (Revised)
 # Streamlit-native image rendering + buttons (no raw HTML <img>/<form>)
@@ -263,51 +262,41 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------- Bottom Picture Row (touch to speak) ----------------
 # Files expected at repo root under ./assets
+ASSETS_DIR = Path(__file__).parent / "assets"
+
 perfumes = [
-    {
-        "id": 1,
-        "name": "Endless Mountains & Rivers",
-        "img": "assets/1_Endless_rivers.png",
-        "line": "The Perfume Name is: Endless Mountains & Rivers",
-    },
-    {
-        "id": 2,
-        "name": "Flowing Gently into Calm",
-        "img": "assets/2_Flowing_Calm.png",
-        "line": "The Perfume Name is: Flowing Gently into Calm",
-    },
-    {
-        "id": 3,
-        "name": "Stillness in the Mountains",
-        "img": "assets/3_Still_Mountain.png",
-        "line": "The Perfume Name is Stillness in the Mountains",
-    },
-    {
-        "id": 4,
-        "name": "Wind Through Wooden Frames",
-        "img": "assets/4_Wind_Frames.png",
-        "line": "The Perfume Name is: Wind Through Wooden Frames",
-    },
-    {
-        "id": 5,
-        "name": "Rain In The Hills",
-        "img": "assets/5_Rain_Hills.png",
-        "line": "The Perfume Name is: Rain In The Hills",
-    },
+    {"id": 1, "name": "Endless Mountains & Rivers", "file": "1_Endless_rivers.png", "line": "The Perfume Name is: Endless Mountains & Rivers"},
+    {"id": 2, "name": "Flowing Gently into Calm", "file": "2_Flowing_Calm.png", "line": "The Perfume Name is: Flowing Gently into Calm"},
+    {"id": 3, "name": "Stillness in the Mountains", "file": "3_Still_Mountain.png", "line": "The Perfume Name is Stillness in the Mountains"},
+    {"id": 4, "name": "Wind Through Wooden Frames", "file": "4_Wind_Frames.png", "line": "The Perfume Name is: Wind Through Wooden Frames"},
+    {"id": 5, "name": "Rain In The Hills", "file": "5_Rain_Hills.png", "line": "The Perfume Name is: Rain In The Hills"},
 ]
+
+# Debug toggle to help verify paths in Cloud
+debug_assets = st.toggle("Debug assets (show path checks)", value=False)
+if debug_assets:
+    st.write({
+        "cwd": os.getcwd(),
+        "ASSETS_DIR": str(ASSETS_DIR),
+        "assets_dir_exists": ASSETS_DIR.exists(),
+        "assets_list": sorted([p.name for p in ASSETS_DIR.iterdir()]) if ASSETS_DIR.exists() else [],
+    })
 
 st.subheader("Tap a picture to speak")
 
-# Try to fit all five on one row; on narrow phones Streamlit may wrap to 2 rows.
 cols = st.columns(5, gap="small")
 for i, pf in enumerate(perfumes):
     with cols[i]:
-        # Streamlit-native image serving → works on Cloud reliably
+        rel_path = Path("assets") / pf["file"]
+        abs_path = ASSETS_DIR / pf["file"]
+        # Prefer absolute path (more robust on Cloud)
+        img_path = abs_path if abs_path.exists() else rel_path
+        if debug_assets:
+            st.caption(f"Using: {img_path}")
         try:
-            st.image(pf["img"], use_container_width=True, caption=None)
-        except Exception as _:
-            st.warning(f"Missing image: {pf['img']}")
-        # Touch/click button
+            st.image(str(img_path), use_container_width=True)
+        except Exception:
+            st.warning(f"Missing image: {rel_path}")
         if st.button(pf["name"], key=f"tap_{pf['id']}"):
             if ss.session_id and ss.session_token:
                 try:
