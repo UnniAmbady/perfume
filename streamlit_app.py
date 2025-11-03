@@ -1,5 +1,5 @@
 
-# Ver 0.0
+# Ver 0.5
 # Perfume Project — Main Page UI
 # Streamlit app focusing on: start popup, music during avatar init (5s or until 200 OK),
 # tall avatar view near the top, bottom picture row (touch-friendly), and sidebar Start/End.
@@ -298,31 +298,31 @@ perfumes = [
     {
         "id": 1,
         "name": "Endless Mountains & Rivers",
-        "img": "assets/1.Endless_rivers.png",
+        "img": "assets/1_Endless_rivers.png",
         "line": "The Perfume Name is: Endless Mountains & Rivers",
     },
     {
         "id": 2,
         "name": "Flowing Gently into Calm",
-        "img": "assets/2.Flowing_Calm.png",
+        "img": "assets/2_Flowing_Calm.png",
         "line": "The Perfume Name is: Flowing Gently into Calm",
     },
     {
         "id": 3,
         "name": "Stillness in the Mountains",
-        "img": "assets/3.Still_Mountain.png",
+        "img": "assets/3_Still_Mountain.png",
         "line": "The Perfume Name is Stillness in the Mountains",
     },
     {
         "id": 4,
         "name": "Wind Through Wooden Frames",
-        "img": "assets/4.Wind_Frames.png",
+        "img": "assets/4_Wind_Frames.png",
         "line": "The Perfume Name is: Wind Through Wooden Frames",
     },
     {
         "id": 5,
         "name": "Rain In The Hills",
-        "img": "assets/5.Rain_Hills.png",
+        "img": "assets/5_Rain_Hills.png",
         "line": "The Perfume Name is: Rain In The Hills",
     },
 ]
