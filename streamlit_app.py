@@ -4,7 +4,7 @@
 # Streamlit app focusing on: start popup, music during avatar init (5s or until 200 OK),
 # tall avatar view near the top, bottom picture row (touch-friendly), and sidebar Start/End.
 # Keeps the HeyGen + ChatGPT wiring and most utilities from Avatharam-2.2-Ver-8.1, while
-# simplifying button coloring per your note.
+# simplifying button coloring per your note.    
 
 import atexit
 import json
@@ -298,31 +298,31 @@ perfumes = [
     {
         "id": 1,
         "name": "Endless Mountains & Rivers",
-        "img": "assets/1.Endless_rivers.PNG",
+        "img": "assets/1.Endless_rivers.png",
         "line": "The Perfume Name is: Endless Mountains & Rivers",
     },
     {
         "id": 2,
         "name": "Flowing Gently into Calm",
-        "img": "assets/2.Flowing_Calm.PNG",
+        "img": "assets/2.Flowing_Calm.png",
         "line": "The Perfume Name is: Flowing Gently into Calm",
     },
     {
         "id": 3,
         "name": "Stillness in the Mountains",
-        "img": "assets/3.Still_Mountain.PNG",
+        "img": "assets/3.Still_Mountain.png",
         "line": "The Perfume Name is Stillness in the Mountains",
     },
     {
         "id": 4,
         "name": "Wind Through Wooden Frames",
-        "img": "assets/4.Wind_Frames.PNG",
+        "img": "assets/4.Wind_Frames.png",
         "line": "The Perfume Name is: Wind Through Wooden Frames",
     },
     {
         "id": 5,
         "name": "Rain In The Hills",
-        "img": "assets/5.Rain_Hills.PNG",
+        "img": "assets/5.Rain_Hills.png",
         "line": "The Perfume Name is: Rain In The Hills",
     },
 ]
