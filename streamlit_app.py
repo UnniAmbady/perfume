@@ -1,10 +1,13 @@
 
 # Ver 0.5
-# Perfume Project — Main Page UI
-# Streamlit app focusing on: start popup, music during avatar init (5s or until 200 OK),
-# tall avatar view near the top, bottom picture row (touch-friendly), and sidebar Start/End.
-# Keeps the HeyGen + ChatGPT wiring and most utilities from Avatharam-2.2-Ver-8.1, while
-# simplifying button coloring per your note.    
+
+# Perfume Project — Main Page UI (Revised)
+# Streamlit-native image rendering + buttons (no raw HTML <img>/<form>)
+# • Popup to capture Name & Tel → plays BenHur-Music.mp3 while initializing (max 5s)
+# • Stop music on timeout or when HeyGen returns 200 OK (token created)
+# • Avatar viewer kept high & tall; sidebar retains Start/End
+# • Bottom row: 5 pictures in a single row, touch/click to make avatar speak
+# • Assets live at repo root: ./assets/<file>.png
 
 import atexit
 import json
@@ -20,39 +23,18 @@ import streamlit.components.v1 as components
 # ---------------- Page setup (portrait-first) ----------------
 st.set_page_config(page_title="Perfume • Avatar", layout="wide", initial_sidebar_state="expanded")
 
-# Make base CSS mobile-first (iPhone/iPad portrait) and remove black borders.
+# Minimal mobile-first CSS. No custom HTML gallery anymore; keep general look tidy.
 st.markdown(
     """
     <style>
-      .block-container { padding-top: .4rem; padding-bottom: .6rem; max-width: 760px; }
-      /* Keep the avatar high on screen */
+      .block-container { padding-top: .4rem; padding-bottom: .6rem; max-width: 900px; }
       .avatar-wrap { margin-top: .2rem; }
-      /* Viewer frame tweaks to avoid big black border */
       .avatar-stage iframe { width: 100%; height: 58vh; border: 0; border-radius: 16px; background: #000; }
-      @media (max-width: 480px) {
-        .avatar-stage iframe { height: 55vh; }
-      }
-
-      /* Bottom picture strip */
-      .thumb-strip { position: relative; margin-top: .6rem; }
-      .thumb-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(100px, 1fr);
-                   gap: 12px; overflow-x: auto; padding: 8px 2px 2px 2px; -webkit-overflow-scrolling: touch; }
-      /* Hide scrollbars */
-      .thumb-row { scrollbar-width: none; } /* Firefox */
-      .thumb-row::-webkit-scrollbar { display: none; }
-
-      .thumb { aspect-ratio: 1 / 1; border-radius: 14px; border: 1px solid #333; display: grid; place-items: center; }
-      .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; user-select: none; -webkit-user-drag: none; }
-      .thumb button { all: unset; cursor: pointer; width: 100%; height: 100%; display: block; }
-
-      /* Make click target equal to the image (tap-friendly) */
-      .thumb .tap { position: relative; display: block; width: 100%; height: 100%; }
-
-      /* Minimal buttons */
+      @media (max-width: 480px) { .avatar-stage iframe { height: 55vh; } }
       .stButton>button { border-radius: 12px; height: 44px; }
-
-      /* Sidebar spacing */
       section[data-testid='stSidebar'] .block-container { padding-top: .6rem; }
+      /* Make picture buttons compact */
+      .perfume-btn > button { width: 100%; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -93,7 +75,7 @@ def _headers_bearer(tok: str):
         "Content-Type": "application/json",
     }
 
-# ---------------- Fixed Avatar (keep same) ----------------
+# ---------------- Fixed Avatar ----------------
 FIXED_AVATAR = {
     "avatar_id": "June_HR_public",
     "default_voice": "68dedac41a9f46a6a4271a95c733823c",
@@ -116,7 +98,6 @@ ss.setdefault("gpt_query", "Hello, welcome.")
 # ---------------- HTTP Helpers ----------------
 def _post_xapi(url, payload=None):
     r = requests.post(url, headers=HEADERS_XAPI, data=json.dumps(payload or {}), timeout=60)
-    body = {}
     try:
         body = r.json()
     except Exception:
@@ -128,7 +109,6 @@ def _post_xapi(url, payload=None):
 
 def _post_bearer(url, token, payload=None):
     r = requests.post(url, headers=_headers_bearer(token), data=json.dumps(payload or {}), timeout=60)
-    body = {}
     try:
         body = r.json()
     except Exception:
@@ -161,7 +141,7 @@ def new_session(avatar_id: str, voice_id: Optional[str] = None):
 
 
 def create_session_token(session_id: str) -> str:
-    status, body = _post_xapi(API_CREATE_TOKEN, {"session_id": session_id})
+    _, body = _post_xapi(API_CREATE_TOKEN, {"session_id": session_id})
     tok = (body.get("data") or {}).get("token") or (body.get("data") or {}).get("access_token")
     if not tok:
         raise RuntimeError(f"Missing token in response: {body}")
@@ -201,9 +181,6 @@ def _graceful_shutdown():
         pass
 
 # ---------------- Popup (Name & Tel) ----------------
-# We model a modal-like gate: on first load show an input form. On OK: start BGM and the 5s timer
-# and immediately begin avatar initialization.
-
 with st.container(border=True):
     if not ss.popup_done:
         st.markdown("### Enter your details to start")
@@ -216,8 +193,6 @@ with st.container(border=True):
             ss.popup_done = True
             ss.play_bgm = True
             ss.init_deadline = time.time() + 5.0
-            # Begin initializing the avatar (3–5 sec in practice). As soon as we get
-            # a 200 for token creation, we consider init completed and will stop music.
             try:
                 created = new_session(FIXED_AVATAR["avatar_id"], FIXED_AVATAR.get("default_voice"))
                 sid, offer_sdp, rtc_config = created["session_id"], created["offer_sdp"], created["rtc_config"]
@@ -233,16 +208,13 @@ with st.container(border=True):
             ss.play_bgm = False
 
 # ---------------- Background music control ----------------
-# Start music when play_bgm is True; stop when (deadline passed) OR (viewer_ready True)
 benhur_path = Path(__file__).parent / "BenHur-Music.mp3"
 if ss.play_bgm and benhur_path.exists():
     components.html("""
         <audio id='bgm' src='BenHur-Music.mp3' autoplay loop></audio>
     """, height=0)
 
-# Evaluate stop condition
 if ss.play_bgm and (time.time() >= ss.init_deadline or ss.viewer_ready):
-    # render a tiny script that stops audio on the client
     components.html("""
         <script>
           const a = document.getElementById('bgm'); if (a) { a.pause(); a.currentTime = 0; }
@@ -284,16 +256,13 @@ if ss.viewer_ready and viewer_path.exists():
         .replace("__OFFER_SDP__", json.dumps(ss.offer_sdp)[1:-1])
         .replace("__RTC_CONFIG__", json.dumps(ss.rtc_config or {}))
     )
-    # Taller frame to minimize borders and maximize avatar presence
-    components.html(html, height= int(0.58 * 1000), scrolling=False)  # ~58vh fallback
+    components.html(html, height=int(0.58 * 1000), scrolling=False)
 else:
     st.info("Avatar not started yet. Use the left panel to Start.")
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------- Bottom Picture Row (touch to speak) ----------------
-# You can place your actual images under ./assets/perfume{1..5}.jpg
-# If files are absent, colored placeholders render instead.
-
+# Files expected at repo root under ./assets
 perfumes = [
     {
         "id": 1,
@@ -327,82 +296,29 @@ perfumes = [
     },
 ]
 
-st.markdown("<div class='thumb-strip'>", unsafe_allow_html=True)
-st.markdown("#### Tap a picture to speak")
+st.subheader("Tap a picture to speak")
 
-# Render three visible, two overflow to the right (natural on mobile). No scrollbar shown.
-# We still need a way to detect a tap in Streamlit. Use one button per tile wrapping the image.
-# This remains touch-friendly on Windows touch screens as well.
-
-row = st.container()
-with row:
-    st.markdown("<div class='thumb-row'>", unsafe_allow_html=True)
-    chosen = None
-    for pf in perfumes:
-        img_path = Path(pf["img"]).as_posix()
-        exists = Path(pf["img"]).exists()
-        col = st.container()
-        with col:
-            c = st.columns(1)[0]
-            with c:
-                # Build a tiny HTML tile with a form-like button
-                if exists:
-                    st.markdown(
-                        f"""
-                        <div class='thumb'>
-                          <form action='' method='post'>
-                            <button class='tap' name='tap_{pf['id']}' value='{pf['id']}'></button>
-                            <img src='{img_path}' alt='{pf['name']}' />
-                          </form>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        f"""
-                        <div class='thumb' style='background: linear-gradient(135deg,#333,#111); color:#eee; font-weight:600;'>
-                          <form action='' method='post'>
-                            <button class='tap' name='tap_{pf['id']}' value='{pf['id']}'></button>
-                            <div style='text-align:center;padding:8px;'>#{pf['id']}<br/>{pf['name']}</div>
-                          </form>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-            # Convert posted value into Streamlit state using query params (simple technique)
-            
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# Read posted selection from query params (works because the button submits to the same URL)
-params = st.query_params
-sel_id = None
-for i in range(1, 6):
-    k = f"tap_{i}"
-    if k in params:
+# Try to fit all five on one row; on narrow phones Streamlit may wrap to 2 rows.
+cols = st.columns(5, gap="small")
+for i, pf in enumerate(perfumes):
+    with cols[i]:
+        # Streamlit-native image serving → works on Cloud reliably
         try:
-            sel_id = int(params[k])
-        except Exception:
-            pass
-        # Clear the param so repeated renders don't retrigger
-        params.pop(k, None)
-        st.query_params.clear()
-        break
+            st.image(pf["img"], use_container_width=True, caption=None)
+        except Exception as _:
+            st.warning(f"Missing image: {pf['img']}")
+        # Touch/click button
+        if st.button(pf["name"], key=f"tap_{pf['id']}"):
+            if ss.session_id and ss.session_token:
+                try:
+                    send_text_to_avatar(ss.session_id, ss.session_token, pf["line"])
+                    st.success("Sent to avatar")
+                except Exception as e:
+                    st.error(f"Failed to speak: {e}")
+            else:
+                st.warning("Start the avatar first from the sidebar.")
 
-if sel_id:
-    sel = next((x for x in perfumes if x["id"] == sel_id), None)
-    if sel and ss.session_id and ss.session_token:
-        try:
-            send_text_to_avatar(ss.session_id, ss.session_token, sel["line"])
-            st.success(f"Spoken: {sel['line']}")
-        except Exception as e:
-            st.error(f"Failed to speak: {e}")
-    elif sel:
-        st.warning("Start the avatar first from the sidebar.")
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-# ---------------- Optional: ChatGPT relay (kept minimal, no button color styling) ----------------
+# ---------------- Optional: ChatGPT relay (kept minimal) ----------------
 colA, colB = st.columns([1,1])
 with colA:
     if st.button("Instruction"):
@@ -445,5 +361,4 @@ with colB:
             except Exception as e:
                 st.error(f"ChatGPT call failed: {e}")
 
-# Message edit area
 ss.gpt_query = st.text_area("Message", value=ss.get("gpt_query", "Hello, welcome."), height=120)
